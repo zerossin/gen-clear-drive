@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ==================== Project Specific ====================
+
+# Large Datasets (DO NOT COMMIT - use Git LFS or external storage)
+datasets/
+!datasets/.gitkeep
+
+# Experiment Results
+experiments/
+!experiments/.gitkeep
+runs/
+!runs/.gitkeep
+
+# Pre-trained Models (download separately or use Git LFS)
+*.pt
+*.pth
+*.onnx
+*.weights
+!models/.gitkeep
+
+# CycleGAN Generated Content
+pytorch-CycleGAN-and-pix2pix/checkpoints/
+pytorch-CycleGAN-and-pix2pix/results/
+pytorch-CycleGAN-and-pix2pix/datasets/
+!pytorch-CycleGAN-and-pix2pix/checkpoints/.gitkeep
+!pytorch-CycleGAN-and-pix2pix/results/.gitkeep
+!pytorch-CycleGAN-and-pix2pix/datasets/.gitkeep
+
+# Logs
+*.log
+logs/
+wandb/
+
+# Temporary Files
+*.tmp
+*.bak
+*.cache
+
+# Large Image/Video Files
+*.mp4
+*.avi
+*.mov
+*.mkv
+# Keep sample images for demo
+!bus.jpg
+!assets/*.jpg
+!assets/*.png
+
+# Config files with absolute paths (each user should create their own)
+config.local.yaml
+
+# Internal analysis reports (not for public)
+ANALYSIS_REPORT.md
+*_ANALYSIS.md
+*_REPORT.md
+notes/
+drafts/
