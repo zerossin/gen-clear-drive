@@ -1,6 +1,6 @@
 # gen-clear-drive
 
-**CycleGAN + YOLO11 기반 야간 주행 이미지 개선 파이프라인**
+**CycleGAN + YOLO11 기반 야간 주행 이미지 개선 파이프라인** (제작중)
 
 야간 주행 이미지를 주간 이미지로 변환하여 객체 탐지(YOLO) 성능을 개선하는 연구 프로젝트입니다.
 
@@ -37,8 +37,8 @@ python -m venv venv
 # 의존성 설치
 pip install -r requirements.txt
 
-# CycleGAN 서브모듈 초기화
-git submodule update --init --recursive
+# CycleGAN 저장소 클론 (별도 설치 필요)
+git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix.git
 ```
 
 ### 2. 데이터셋 준비

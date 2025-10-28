@@ -8,8 +8,8 @@
 git clone https://github.com/YOUR_USERNAME/gen-clear-drive.git
 cd gen-clear-drive
 
-# Initialize CycleGAN submodule
-git submodule update --init --recursive
+# Clone CycleGAN repository (NOT a submodule, clone separately)
+git clone https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix.git
 ```
 
 ### 2. Create Virtual Environment
