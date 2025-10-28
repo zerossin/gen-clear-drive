@@ -31,6 +31,11 @@ Thumbs.db
 
 # ==================== Project Specific ====================
 
+# CycleGAN Submodule (clone separately from https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)
+# This is 96.84 GB and contains its own .git repository
+pytorch-CycleGAN-and-pix2pix/
+!pytorch-CycleGAN-and-pix2pix/README.md
+
 # Large Datasets (DO NOT COMMIT - use Git LFS or external storage)
 datasets/
 !datasets/.gitkeep
