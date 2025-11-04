@@ -37,6 +37,127 @@ def safe_copy(src: Path, dst: Path):
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
 
+def sample_subset(src_root: Path, dest_root: Path, n_samples: int, copy_labels: bool = True):
+    """
+    Sample n_samples images from src_root and copy to dest_root.
+    
+    Args:
+        src_root: Source dataset root (expects images/test and labels/test subdirs)
+        dest_root: Destination root (will create images/ and labels/ subdirs)
+        n_samples: Number of samples to copy
+        copy_labels: Whether to copy label files
+    """
+    src_img_dir = src_root / "images" / "test" if (src_root / "images" / "test").exists() else src_root / "images"
+    src_lbl_dir = src_root / "labels" / "test" if (src_root / "labels" / "test").exists() else src_root / "labels"
+    
+    # Get all images
+    all_imgs = list_imgs(src_img_dir)
+    if len(all_imgs) < n_samples:
+        print(f"Warning: Only {len(all_imgs)} images available, sampling all")
+        n_samples = len(all_imgs)
+    
+    # Random sample
+    sampled = random.sample(all_imgs, n_samples)
+    
+    # Create dest directories
+    dst_img_dir = dest_root / "images"
+    dst_lbl_dir = dest_root / "labels"
+    dst_img_dir.mkdir(parents=True, exist_ok=True)
+    if copy_labels:
+        dst_lbl_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Copy files
+    for img in sampled:
+        safe_copy(img, dst_img_dir / img.name)
+        if copy_labels:
+            lbl = src_lbl_dir / (img.stem + ".txt")
+            if lbl.exists():
+                safe_copy(lbl, dst_lbl_dir / lbl.name)
+    
+    # Copy data.yaml if exists
+    data_yaml = src_root / "data.yaml"
+    if data_yaml.exists():
+        # Update paths in data.yaml
+        import yaml
+        with open(data_yaml, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        
+        # Update paths to point to current structure
+        data['path'] = str(dest_root.absolute())
+        data['test'] = 'images'  # Since we use images/ directly (no test subdir)
+        data['val'] = 'images'   # YOLO also checks val path
+        data['train'] = 'images'  # For consistency
+        
+        # Write to destination
+        with open(dest_root / "data.yaml", 'w', encoding='utf-8') as f:
+            yaml.dump(data, f, default_flow_style=False)
+    
+    print(f"✓ Sampled {len(sampled)} images from {src_root} to {dest_root}")
+    return sampled
+
+def prepare_for_yolo_val(img_dir: Path, label_dir: Path, output_dir: Path):
+    """
+    Prepare images and labels for YOLO validation.
+    
+    Args:
+        img_dir: Directory containing images (can be CycleGAN output with *_fake_A.jpg)
+        label_dir: Directory containing corresponding .txt labels
+        output_dir: Output directory (will create images/ and labels/ subdirs)
+    
+    Returns:
+        Path to output directory
+    """
+    # Create output structure
+    out_img_dir = output_dir / "images"
+    out_lbl_dir = output_dir / "labels"
+    out_img_dir.mkdir(parents=True, exist_ok=True)
+    out_lbl_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Get all images
+    all_imgs = list_imgs(img_dir)
+    
+    copied = 0
+    for img in all_imgs:
+        # Handle CycleGAN output names: xxx_fake_A.jpg -> xxx.jpg
+        if "_fake_A" in img.stem:
+            base_name = img.stem.replace("_fake_A", "")
+        elif "_real_" in img.stem:
+            # Skip _real_A, _real_B
+            continue
+        else:
+            base_name = img.stem
+        
+        # Copy image with clean name
+        out_img = out_img_dir / f"{base_name}{img.suffix}"
+        safe_copy(img, out_img)
+        
+        # Copy corresponding label
+        lbl = label_dir / f"{base_name}.txt"
+        if lbl.exists():
+            safe_copy(lbl, out_lbl_dir / lbl.name)
+            copied += 1
+        else:
+            print(f"Warning: No label for {base_name}")
+    
+    # Create data.yaml for YOLO validation
+    import yaml
+    data_yaml = {
+        'path': str(output_dir.absolute()),
+        'test': 'images',
+        'val': 'images',   # YOLO also checks val path
+        'train': 'images',  # For consistency
+        'names': [
+            "person", "rider", "car", "bus", "truck",
+            "bike", "motor", "traffic light", "traffic sign", "train"
+        ],
+        'nc': 10
+    }
+    with open(output_dir / "data.yaml", 'w', encoding='utf-8') as f:
+        yaml.dump(data_yaml, f, default_flow_style=False)
+    
+    print(f"✓ Prepared {copied} image-label pairs in {output_dir}")
+    return output_dir
+
 def copy_images_and_labels(src_imgs, src_lbl_root: Path, dst_img_root: Path, dst_lbl_root: Path):
     copied_imgs = []
     missing_lbls = []

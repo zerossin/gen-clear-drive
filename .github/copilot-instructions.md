@@ -92,6 +92,17 @@ experiments/run_20251014_032540/
 
 ## 프로젝트별 특이사항
 
+### 0. **CRITICAL: 실행 환경 규칙**
+- **모든 Python 스크립트는 venv에서 실행할 것**
+  - bat 파일 시작 부분에 `call ..\venv\Scripts\activate.bat` 필수
+  - venv 없으면 에러 출력 후 종료
+- **GPU ID 지정 금지**
+  - `--gpu_ids` 인자 사용하지 말 것 (자동 감지됨)
+  - train.py가 `init_ddp()`로 자동 처리
+- **기존 bat 파일 참조**
+  - 새 bat 파일 만들 때는 기존 `train_cyclegan_yolo.bat` 구조 그대로 복사
+  - 이름과 설명만 변경, 인자는 동일하게 유지
+
 ### 1. Windows 경로 + PowerShell
 - 모든 경로는 `Path(r"C:\Users\...")` 스타일 raw string 사용
 - 터미널 명령: PowerShell 기준 (`;`로 다중 명령 연결)
