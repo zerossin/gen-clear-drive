@@ -89,7 +89,7 @@ def compare_models(n_samples=100, device='0', yolo_model='yolo11s.pt'):
     run_cyclegan_b2a(
         input_dir=night_input / "images",
         results_root=yolo_out,
-        ckpt_name="clear_d2n_yolo_v2_lambda1",
+        ckpt_name="clear_d2n_yolo_v3_lambda2",
         norm="instance",
         no_dropout=True,
         netG="resnet_9blocks"
@@ -111,7 +111,7 @@ def compare_models(n_samples=100, device='0', yolo_model='yolo11s.pt'):
     # YOLO 모델
     yolo_yolo = exp_root / "yolo_eval" / "yolo"
     prepare_for_yolo_val(
-        img_dir=yolo_out / "clear_d2n_yolo_v2_lambda1" / "test_latest" / "images",
+        img_dir=yolo_out / "clear_d2n_yolo_v3_lambda2" / "test_latest" / "images",
         label_dir=night_input / "labels",
         output_dir=yolo_yolo
     )
@@ -215,13 +215,18 @@ def compare_models(n_samples=100, device='0', yolo_model='yolo11s.pt'):
         'original': {k: float(v) if v is not None else 0.0 for k, v in metrics_original.items()},
         'baseline': {k: float(v) if v is not None else 0.0 for k, v in metrics_baseline.items()},
         'yolo': {k: float(v) if v is not None else 0.0 for k, v in metrics_yolo.items()},
-        'improvement': {
-            'mAP50': (metrics_yolo['mAP50'] - metrics_baseline['mAP50']) / metrics_baseline['mAP50'] * 100,
-            'mAP50-95': (metrics_yolo['mAP50-95'] - metrics_baseline['mAP50-95']) / metrics_baseline['mAP50-95'] * 100,
-            'precision': (metrics_yolo['precision'] - metrics_baseline['precision']) / metrics_baseline['precision'] * 100,
-            'recall': (metrics_yolo['recall'] - metrics_baseline['recall']) / metrics_baseline['recall'] * 100
-        }
+        'improvement': {}
     }
+    
+    # Safe improvement calculation
+    for metric in ['mAP50', 'mAP50-95', 'precision', 'recall']:
+        base_val = metrics_baseline.get(metric, 0.0) or 0.0
+        yolo_val = metrics_yolo.get(metric, 0.0) or 0.0
+        
+        if base_val > 0:
+            summary['improvement'][metric] = (yolo_val - base_val) / base_val * 100
+        else:
+            summary['improvement'][metric] = None
     
     json_path = exp_root / "comparison_summary.json"
     with open(json_path, 'w', encoding='utf-8') as f:

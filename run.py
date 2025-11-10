@@ -117,15 +117,25 @@ def prepare_for_yolo_val(img_dir: Path, label_dir: Path, output_dir: Path):
     all_imgs = list_imgs(img_dir)
     
     copied = 0
+    skipped = 0
     for img in all_imgs:
-        # Handle CycleGAN output names: xxx_fake_A.jpg -> xxx.jpg
+        # Handle CycleGAN output names: xxx_fake_A.jpg -> xxx.jpg or xxx_fake.png -> xxx.jpg
+        # CRITICAL: Check longer suffix first to avoid false matches!
         if "_fake_A" in img.stem:
             base_name = img.stem.replace("_fake_A", "")
-        elif "_real_" in img.stem:
-            # Skip _real_A, _real_B
+        elif "_fake" in img.stem:
+            # Handle test.py output: xxx_fake.png -> xxx
+            base_name = img.stem.replace("_fake", "")
+        elif "_real" in img.stem:
+            # Skip _real_A, _real_B, _real
+            skipped += 1
             continue
         else:
-            base_name = img.stem
+            # CRITICAL: If no suffix found, skip to avoid duplicates!
+            # This happens when prepare_for_yolo_val is called multiple times
+            # or when clean images already exist
+            skipped += 1
+            continue
         
         # Copy image with clean name
         out_img = out_img_dir / f"{base_name}{img.suffix}"
@@ -138,6 +148,8 @@ def prepare_for_yolo_val(img_dir: Path, label_dir: Path, output_dir: Path):
             copied += 1
         else:
             print(f"Warning: No label for {base_name}")
+    
+    print(f"  ✓ Copied {copied} image-label pairs (skipped {skipped} images)")
     
     # Create data.yaml for YOLO validation
     import yaml
@@ -155,7 +167,7 @@ def prepare_for_yolo_val(img_dir: Path, label_dir: Path, output_dir: Path):
     with open(output_dir / "data.yaml", 'w', encoding='utf-8') as f:
         yaml.dump(data_yaml, f, default_flow_style=False)
     
-    print(f"✓ Prepared {copied} image-label pairs in {output_dir}")
+    print(f"  ✓ Created data.yaml in {output_dir}")
     return output_dir
 
 def copy_images_and_labels(src_imgs, src_lbl_root: Path, dst_img_root: Path, dst_lbl_root: Path):
